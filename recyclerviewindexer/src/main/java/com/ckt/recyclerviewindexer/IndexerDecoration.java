@@ -25,7 +25,6 @@ import java.util.Objects;
 public class IndexerDecoration extends RecyclerView.ItemDecoration implements RecyclerView.OnItemTouchListener {
     private static final String TAG = "IndexerDecoration";
 
-    private static final String DEFAULT_INDEXER = ContactsIndexer.DEFAULT_INDEXER_CHARACTERS;
     private String mIndexerString;
 
     // Text size of character in alphabet.
@@ -74,13 +73,15 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
     private onSectionSelectedListener mListener;
 
+    private boolean mHasEnoughSpace = true;
+
 
     public IndexerDecoration(Builder builder) {
         mListener = builder.mListener;
 
         mIndexerString = builder.mIndexerString;
         if (mIndexerString == null) {
-            mIndexerString = DEFAULT_INDEXER;
+            return;
         }
 
         DisplayMetrics displayMetrics = builder.mContext.getResources().getDisplayMetrics();
@@ -161,15 +162,12 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
         private String mIndexerString;
         private onSectionSelectedListener mListener;
 
-        public Builder(Context context, onSectionSelectedListener listener) {
+        public Builder(Context context, String indexerString, onSectionSelectedListener listener) {
             mContext = context;
+            mIndexerString = indexerString;
             mListener = Objects.requireNonNull(listener);
         }
 
-        public Builder indexer(String indexerString) {
-            mIndexerString = indexerString;
-            return this;
-        }
 
         public Builder sectionTextSize(int spSize) {
             mSectionSize = spSize;
@@ -192,20 +190,24 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
     }
 
-    private boolean mNeedDrawIndexer = true;
 
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        if (mIndexerString == null) {
+            return;
+        }
+
+        // if width or height changed , check whether RecyclerView has enough space to draw indexer
         if (mRecyclerViewWidth != parent.getWidth() || mRecyclerViewHeight != parent.getHeight()) {
             mRecyclerViewWidth = parent.getWidth();
             mRecyclerViewHeight = parent.getHeight();
 
             if (mRecyclerViewHeight - mOutlineRect.height() <= mMinPaddingTop) {
-                mNeedDrawIndexer = false;
+                mHasEnoughSpace = false;
                 Log.w(TAG, "Couldn't show indexer. RecyclerView must have enough height!!!");
                 return;
             } else {
-                mNeedDrawIndexer = true;
+                mHasEnoughSpace = true;
                 // When RecyclerView's size changed, adjust outline rect.
                 Log.v(TAG, "RecyclerView's size has changed, so adjust alphabet outline rect.");
                 mOutlineRect.offsetTo(parent.getWidth() - mHorizontalPadding - mOutlineRect.width(),
@@ -213,7 +215,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
             }
         }
 
-        if (!mNeedDrawIndexer) {
+        if (!mHasEnoughSpace) {
             return;
         }
 

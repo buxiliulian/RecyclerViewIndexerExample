@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SectionIndexer;
 
+import com.ckt.recyclerviewindexer.ContactsIndexer;
 import com.ckt.recyclerviewindexer.IndexerDecoration;
 import com.ckt.recyclerviewindexer.StickyHeaderDecoration;
 
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.setOnContactClickListener(uri -> {});
         mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
         IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this,
+                ContactsIndexer.DEFAULT_INDEXER_CHARACTERS,
                 (rv, sectionIndex) -> {
                     // Fast scroll to specified position
                     RecyclerView.Adapter adapter = rv.getAdapter();
