@@ -3,7 +3,7 @@ MDContacts is a material design contacts, it use indexer library to build sticky
 dividers and a beautiful indexer aligned to RecyclerView.
 
 # Screenshot
-![indexer](https://github.com/buxiliulian/MateriaDesignContacts/blob/master/screenshots/indexer.gif)
+![indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/indexer.gif)
 
 # RecyclerViewIndexer library
 Indexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
@@ -105,4 +105,4 @@ If you indexer is based on alphabet, you can configure indexer to only support i
             // configure ContactIndexer
             mContactsIndexer = new ContactsIndexer(cursor, INDEX_NAME, SECTION_INDEXER);
 ```
-![alphabet_indexer](https://github.com/buxiliulian/MateriaDesignContacts/blob/master/screenshots/alphabet_indexer.gif)
+![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
