@@ -9,7 +9,7 @@ or custom a view to implement indexer.
 # How to use
 ## import
 ```
-compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.1'
+compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.2'
 ```
 ## usage
 
