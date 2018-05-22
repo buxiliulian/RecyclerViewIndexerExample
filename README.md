@@ -21,6 +21,7 @@ compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.1'
         mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
         // add indexer
         IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this,
+                ContactsIndexer.DEFAULT_INDEXER_CHARACTERS,
                 (rv, sectionIndex) -> {
                     // Fast scroll to specified position
                     RecyclerView.Adapter adapter = rv.getAdapter();
