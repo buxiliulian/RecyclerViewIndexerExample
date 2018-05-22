@@ -1,5 +1,6 @@
 # Screenshot
 ![indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/indexer.gif)
+![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
 
 # RecyclerViewIndexer library
 RecyclerViewIndexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
@@ -40,19 +41,4 @@ compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.1'
         mContactsList.addItemDecoration(indexerDecoration);
 ```
 
-### Configuration
-If you indexer is based on alphabet, you can configure indexer to only support it.
-```java
-            private static final String SECTION_INDEXER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            // configure IndexerDecoration
-            IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(getActivity())
-                    // only support alphabet
-                    .indexer(SECTION_INDEXER)
-                    .sectionTextSize(12)
-                    .horizontalPadding(IndexerDecoration.DEFAULT_HORIZONTAL_PADDING)
-                    .balloonColor(IndexerDecoration.DEFAULT_BALLOON_COLOR)
-                    .build();
-            // configure ContactIndexer
-            mContactsIndexer = new ContactsIndexer(cursor, INDEX_NAME, SECTION_INDEXER);
-```
-![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
+
