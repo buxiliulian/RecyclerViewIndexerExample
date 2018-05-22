@@ -1,93 +1,43 @@
-# MDContacts
-MDContacts is a material design contacts, it use indexer library to build sticky headers with appropriate
-dividers and a beautiful indexer aligned to RecyclerView.
-
 # Screenshot
 ![indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/indexer.gif)
 
 # RecyclerViewIndexer library
-Indexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
+RecyclerViewIndexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
 or custom a view to implement indexer.
 
 # How to use
 ## import
 ```
-compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.0'
+compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.1'
 ```
 ## usage
-### adapter
-Adapter must implement interface SectionIndexer, and use ContactsIndexer extends AlphabetIndexer to implement this interface.
-```java
-    private class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> implements SectionIndexer {
-        private Context mContext;
-        private Cursor mCursor;
-        private ContactsIndexer mContactsIndexer;
-
-        ContactsAdapter(Context context, Cursor cursor) {
-            mContext = context;
-            mCursor = cursor;
-            mContactsIndexer = new ContactsIndexer(cursor, INDEX_NAME);
-        }
-
-        @Override
-        public ContactsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            // ...
-        }
-
-        @Override
-        public void onBindViewHolder(ContactsAdapter.ViewHolder holder, int position) {
-            // ...
-        }
-
-        @Override
-        public int getItemCount() {
-            // ...
-        }
-
-        @Override
-        public Object[] getSections() {
-            return mContactsIndexer.getSections();
-        }
-
-        @Override
-        public int getPositionForSection(int sectionIndex) {
-            return mContactsIndexer.getPositionForSection(sectionIndex);
-        }
-
-        @Override
-        public int getSectionForPosition(int position) {
-            return mContactsIndexer.getSectionForPosition(position);
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            // ...
-        }
-
-        void swapCursor(Cursor c) {
-            mCursor = c;
-            mContactsIndexer.setCursor(mCursor);
-            notifyDataSetChanged();
-        }
-    }
-```
 
 ### add decoration
 ```java
-        mContactList = getActivity().findViewById(R.id.contacts);
-        mContactList.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mContactList.setAdapter(mAdapter = new ContactsAdapter(getActivity(), null));
+        mContactList = findViewById(R.id.contacts);
 
         // add sticky head with divider
-        mContactList.addItemDecoration(new StickyHeaderDecoration(getActivity(), StickyHeaderDecoration.VERTICAL));
-        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(getActivity())
-                // character's text size in indexer
+        mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
+        // add indexer
+        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this,
+                (rv, sectionIndex) -> {
+                    // Fast scroll to specified position
+                    RecyclerView.Adapter adapter = rv.getAdapter();
+                    if (adapter instanceof SectionIndexer) {
+                        SectionIndexer indexer = (SectionIndexer) adapter;
+                        int pos = indexer.getPositionForSection(sectionIndex);
+                        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                        if (layoutManager instanceof LinearLayoutManager) {
+                            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+                            linearLayoutManager.scrollToPositionWithOffset(pos, 0);
+                        }
+                    }
+                })
                 .sectionTextSize(12)
-                // indexer padding left and right
                 .horizontalPadding(IndexerDecoration.DEFAULT_HORIZONTAL_PADDING)
-                // balloon background color
                 .balloonColor(IndexerDecoration.DEFAULT_BALLOON_COLOR)
                 .build();
-        mContactList.addItemDecoration(indexerDecoration);
+        mContactsList.addItemDecoration(indexerDecoration);
 ```
 
 ### Configuration
