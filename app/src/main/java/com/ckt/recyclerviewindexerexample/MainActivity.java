@@ -63,11 +63,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mContactsList = findViewById(R.id.contacts);
         mContactsList.setLayoutManager(new LinearLayoutManager(this));
         mContactsList.setAdapter(mAdapter = new ContactsAdapter(this, null));
-        mAdapter.setOnContactClickListener(uri -> {});
+        mAdapter.setOnContactClickListener(uri -> {
+        });
         mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
-        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this,
-                ContactsIndexer.DEFAULT_INDEXER_CHARACTERS,
-                (rv, sectionIndex) -> {
+        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
+                .onScrollListener((rv, sectionIndex) -> {
                     // Fast scroll to specified position
                     RecyclerView.Adapter adapter = rv.getAdapter();
                     if (adapter instanceof SectionIndexer) {
@@ -84,8 +84,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .horizontalPadding(IndexerDecoration.DEFAULT_HORIZONTAL_PADDING)
                 .balloonColor(IndexerDecoration.DEFAULT_BALLOON_COLOR)
                 .build();
-        mContactsList.addItemDecoration(indexerDecoration);
-
+        indexerDecoration.attachToRecyclerView(mContactsList);
     }
 
     private void requestContactPermission() {
