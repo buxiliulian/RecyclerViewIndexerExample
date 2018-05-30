@@ -1,19 +1,26 @@
-# Screenshot
-![indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/indexer.gif)
-![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
-
-# RecyclerViewIndexer library
+# RecyclerViewIndexer
 RecyclerViewIndexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
 or custom a view to implement indexer.
 
-# How to use
-## import
+![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
+
+## Download
+maven:
+```
+<dependency>
+  <groupId>com.buxiliulian.rv</groupId>
+  <artifactId>recyclerviewindexer</artifactId>
+  <version>0.1.3</version>
+  <type>pom</type>
+</dependency>
+```
+
+gradle:
 ```
 compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.3'
 ```
-## usage
 
-### add decoration
+# usage
 ```java
         IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
                 .indexerTextSize(12)
