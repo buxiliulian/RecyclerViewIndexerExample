@@ -2,7 +2,7 @@
 RecyclerViewIndexer Library use RecyclerView.ItemDecoration to draw a indexer, but not override RecyclerView
 or custom a view to implement indexer.
 
-![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/alphabet_indexer.gif)
+![alphabet_indexer](https://github.com/buxiliulian/RecyclerViewIndexerExample/blob/master/screenshots/GIF.gif)
 
 ## Download
 maven:
@@ -20,7 +20,7 @@ gradle:
 compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.3'
 ```
 
-# usage
+# Usage
 ```java
         IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
                 .indexerTextSize(12)
