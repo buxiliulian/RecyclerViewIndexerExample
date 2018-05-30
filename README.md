@@ -9,37 +9,20 @@ or custom a view to implement indexer.
 # How to use
 ## import
 ```
-compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.2'
+compile 'com.buxiliulian.rv:recyclerviewindexer:0.1.3'
 ```
 ## usage
 
 ### add decoration
 ```java
-        mContactList = findViewById(R.id.contacts);
-
-        // add sticky head with divider
-        mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
-        // add indexer
-        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this,
-                ContactsIndexer.DEFAULT_INDEXER_CHARACTERS,
-                (rv, sectionIndex) -> {
-                    // Fast scroll to specified position
-                    RecyclerView.Adapter adapter = rv.getAdapter();
-                    if (adapter instanceof SectionIndexer) {
-                        SectionIndexer indexer = (SectionIndexer) adapter;
-                        int pos = indexer.getPositionForSection(sectionIndex);
-                        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
-                        if (layoutManager instanceof LinearLayoutManager) {
-                            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-                            linearLayoutManager.scrollToPositionWithOffset(pos, 0);
-                        }
-                    }
-                })
-                .sectionTextSize(12)
-                .horizontalPadding(IndexerDecoration.DEFAULT_HORIZONTAL_PADDING)
-                .balloonColor(IndexerDecoration.DEFAULT_BALLOON_COLOR)
+        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
+                .indexerTextSize(12)
+                .horizontalPadding(IndexerDecoration.DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP)
+                .balloonColor(IndexerDecoration.DEFAULT_BALLOON_BG_COLOR)
                 .build();
-        mContactsList.addItemDecoration(indexerDecoration);
+        indexerDecoration.attachToRecyclerView(mContactsList, (rv, sectionIndex) -> {
+            // do what you want...
+        });
 ```
 
 

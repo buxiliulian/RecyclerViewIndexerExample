@@ -15,6 +15,7 @@ import android.support.v4.view.animation.FastOutLinearInInterpolator;
 import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -26,74 +27,124 @@ import java.lang.annotation.RetentionPolicy;
 
 
 /**
- * This ItemDecoration is used to draw indexer of RecyclerView.
+ * Class is used to draw indexer of RecyclerView.
  *
  * @author wei.zhou
  */
-public class IndexerDecoration extends RecyclerView.ItemDecoration implements RecyclerView.OnItemTouchListener {
+public class IndexerDecoration extends RecyclerView.ItemDecoration {
     private static final String TAG = IndexerDecoration.class.getSimpleName();
 
     private RecyclerView mRecyclerView;
-    private String mIndexerString;
-
-    // Text size of character in alphabet.
-    public static final int DEFAULT_SECTION_TEXT_SIZE = 14;// sp
-
-    private TextPaint mAlphabetTextPaint;
-
-    /**
-     * Used for outline.
-     */
-    private Paint mOutlinePaint;
-    private RectF mOutlineRect;
-    private Path mOutlinePath;
-
-    // Outline's stroke width.
-    private static final int DEFAULT_OUTLINE_STROKE_WIDTH = 1; //dp
-
-    // Outline's horizontal padding.
-    public static final int DEFAULT_HORIZONTAL_PADDING = 5; //dp
-    private int mHorizontalPadding;
-
-    // Character's height and width in alphabet.
-    private int mCharHeight, mCharWidth;
-
-    /**
-     * Used for balloon
-     */
-    private Paint mBalloonPaint;
-    private RectF mBalloonRect;
-    private Path mBalloonPath;
-    private TextPaint mBalloonTextPaint;
-    private boolean mShowBalloon;
-    private float mBalloonY;
-    public static final int DEFAULT_BALLOON_COLOR = 0xee3F51B5;
-
-
-    // Used to get text bound.
-    private Rect mTextBound;
-
-    // Outline's minimum padding top.
-    private float mOutlineMinMarginTop;
-
     private int mRecyclerViewWidth, mRecyclerViewHeight;
 
     /**
-     * 索引的字符。
+     * Indexer string, for example, alphabet.
+     */
+    private String mIndexerString;
+
+    /**
+     * Default text size of indexer character.
+     */
+    public static final int DEFAULT_INDEXER_TEXT_SIZE_SP = 14;
+
+    /**
+     * Paint used to draw indexer character.
+     */
+    private TextPaint mIndexerTextPaint;
+
+    /**
+     * Height and width of character in indexer string.
+     */
+    private int mCharHeight, mCharWidth;
+
+
+    /**
+     * Paint used to draw outline.
+     */
+    private Paint mOutlinePaint;
+    /**
+     * Outline's rect.
+     */
+    private RectF mOutlineRect;
+    /**
+     * Outline's path.
+     */
+    private Path mOutlinePath;
+
+    /**
+     * Outline's default stroke width.
+     */
+    private static final int DEFAULT_OUTLINE_STROKE_WIDTH_DP = 1;
+
+    /**
+     * Outline's default horizontal padding.
+     */
+    public static final int DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP = 5;
+    /**
+     * Outline's horizontal padding.
+     */
+    private int mHorizontalPadding;
+
+    /**
+     * Outline's minimum margin top.
+     */
+    private float mOutlineMinMarginTop;
+
+    /**
+     * Paint used to draw balloon.
+     */
+    private Paint mBalloonPaint;
+    /**
+     * Balloon's rect.
+     */
+    private RectF mBalloonRect;
+    /**
+     * Balloon's path.
+     */
+    private Path mBalloonPath;
+    /**
+     * Paint used to draw text in balloon.
+     */
+    private TextPaint mBalloonTextPaint;
+    /**
+     * Decide whether to show balloon.
+     */
+    private boolean mShowBalloon;
+    /**
+     * Balloon's coordinate of X axis.
+     */
+    private float mBalloonY;
+    /**
+     * Balloon's default background color.
+     */
+    public static final int DEFAULT_BALLOON_BG_COLOR = 0xee3F51B5;
+
+
+    /**
+     * Rect used to measure text bound.
+     */
+    private Rect mTextBound;
+
+
+    /**
+     * String of the section within indexer string.
      */
     private String mSection;
 
     /**
-     * 滑动索引条的监听事件。
+     * Scroll listener.
      */
     private onScrollListener mListener;
 
     /**
-     * 是否有足够的空间用于绘制索引条。
+     * Indicate whether RecyclerView has enough space to draw indexer.
      */
     private boolean mHasEnoughSpace;
 
 
+    /**
+     * Annotation of animation state.
+     */
     @IntDef({ANIMATION_STATE_OUT, ANIMATION_STATE_TRANSLATING_IN, ANIMATION_STATE_IN,
             ANIMATION_STATE_TRANSLATING_OUT})
     @Retention(RetentionPolicy.SOURCE)
@@ -101,7 +152,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
     }
 
     /**
-     * 位移动画的状态。
+     * Animation state.
      */
     private static final int ANIMATION_STATE_OUT = 0;
     private static final int ANIMATION_STATE_TRANSLATING_IN = 1;
@@ -112,137 +163,126 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
 
     /**
-     * 执行位移动画的相关参数
+     * Translate animator.
      */
     private ValueAnimator mTranslateAnimator;
-    private Interpolator mShowInterpolator = new FastOutLinearInInterpolator();
-    private Interpolator mHideInterpolator = new LinearOutSlowInInterpolator();
+    /**
+     * Interpolator used for translate in animation.
+     */
+    private Interpolator mInInterpolator = new FastOutLinearInInterpolator();
+    /**
+     * Interpolator used for translate out animation.
+     */
+    private Interpolator mOutInterpolator = new LinearOutSlowInInterpolator();
+    /**
+     * Duration of translate in and out .
+     */
     private static final int ANIMATION_DURATION_MS = 500;
 
     /**
-     * 用于在索引条显示后，执行隐藏动画的任务。
+     * Delay time used to execute translate out animation after indexer is visible.
+     */
+    private static final int TRANSLATE_OUT_DELAY_AFTER_VISIBLE_MS = 1500;
+
+    /**
+     * Runnable used to execute translate out animation.
      */
     private Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
-            hide();
+            translateOut();
         }
     };
-    /**
-     * 在索引条显示后，执行隐藏任务的延迟时间，单位ms。
-     */
-    private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
 
     /**
-     * 索引条从屏幕右侧向左移动的最大距离。
+     * The maximum translation x .
      */
     private float mMaxTranslationX;
 
     /**
-     * 索引条在x轴向左偏移的距离。
+     * The translation x from end to start.
      */
     private float mTranslationX;
 
 
     /**
-     * 用Builder参数构造实例
-     *
-     * @param builder 构建所需的Builder参数
+     * Indicate indexer is dragging.
      */
+    private boolean mIsDragging;
+
+
     public IndexerDecoration(Builder builder) {
-
-        // 获取选中索引条滑动监听事件
-        mListener = builder.mListener;
-
-        // 获取索引字符串
         mIndexerString = builder.mIndexerString;
-        if (mIndexerString == null) {
+        if (TextUtils.isEmpty(mIndexerString)) {
             Log.w(TAG, "You have not set indexer string.");
             return;
         }
 
         DisplayMetrics displayMetrics = builder.mContext.getResources().getDisplayMetrics();
 
-        // 获取索引字体大小，并转换为 px
-        int sectionSize = builder.mSectionSize;
-        if (builder.mSectionSize <= 0) {
-            sectionSize = DEFAULT_SECTION_TEXT_SIZE;
-        }
-        int sectionTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sectionSize,
+        int indexerTextSize = builder.mIndexerTextSize <= DEFAULT_INDEXER_TEXT_SIZE_SP ?
+                DEFAULT_INDEXER_TEXT_SIZE_SP : builder.mIndexerTextSize;
+        indexerTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, indexerTextSize,
                 displayMetrics);
 
-        // 获取水平间距
-        int horizontalPadding = builder.mHorizontalPadding;
-        if (horizontalPadding <= 0) {
-            horizontalPadding = DEFAULT_HORIZONTAL_PADDING;
-        }
+        int horizontalPadding = builder.mHorizontalPadding <= 0 ?
+                DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP : builder.mHorizontalPadding;
         mHorizontalPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, horizontalPadding,
                 displayMetrics);
 
-        // 初始化字母表的画笔，并设置字体大小
-        mAlphabetTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mAlphabetTextPaint.setTextSize(sectionTextSize);
+        mIndexerTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        mIndexerTextPaint.setTextSize(indexerTextSize);
 
-        // 根据字体的大小，获取字体的高(宽高相等)
-        Paint.FontMetrics fontMetrics = mAlphabetTextPaint.getFontMetrics();
+        Paint.FontMetrics fontMetrics = mIndexerTextPaint.getFontMetrics();
         float fontMetricsHeight = fontMetrics.bottom - fontMetrics.top;
         mCharWidth = mCharHeight = (int) Math.ceil(fontMetricsHeight);
 
-        // 根据字体的宽高以及索引字符串的长度，获取轮廓的矩形区域
         mOutlineRect = new RectF();
         mOutlineRect.right = mCharWidth;
         mOutlineRect.bottom = mCharHeight * mIndexerString.length() + mCharHeight;
 
-        // 获取轮廓的rect计算path
         mOutlinePath = new Path();
-        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.top, mOutlineRect.width(), mCharHeight, 180, 180);
+        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.top, mOutlineRect.width(), mCharHeight,
+                180, 180);
         mOutlinePath.rLineTo(0, mOutlineRect.height() - mCharHeight);
-        mOutlinePath.addArc(0, mOutlineRect.height() - mCharHeight,
+        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.height() - mCharHeight,
                 mOutlineRect.width(), mOutlineRect.height(), 0, 180);
         mOutlinePath.lineTo(0, mCharHeight / 2.f);
 
-        // 初始化轮廓的画笔
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setStyle(Paint.Style.STROKE);
         mOutlinePaint.setColor(Color.BLACK);
-        int outlineStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_OUTLINE_STROKE_WIDTH, displayMetrics);
+        int outlineStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_OUTLINE_STROKE_WIDTH_DP, displayMetrics);
         mOutlinePaint.setStrokeWidth(outlineStrokeWidth);
 
-        // 初始化气泡的画笔
         mBalloonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBalloonPaint.setDither(true);
         mBalloonPaint.setStyle(Paint.Style.FILL);
-        int balloonColor = builder.mBalloonColor;
-        if (balloonColor <= 0) {
-            balloonColor = DEFAULT_BALLOON_COLOR;
-        }
+        int balloonColor = builder.mBalloonColor <= 0 ?
+                DEFAULT_BALLOON_BG_COLOR : builder.mBalloonColor;
         mBalloonPaint.setColor(balloonColor);
 
-        // 初始化气泡中索引的画笔，其中字体大小设置为索引字母表中字体大小的2倍
         mBalloonTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         mBalloonTextPaint.setColor(Color.WHITE);
-        mBalloonTextPaint.setTextSize(sectionTextSize * 2);
+        mBalloonTextPaint.setTextSize(indexerTextSize * 2);
 
-        // 根据气泡中字体的大小，计算气泡的直径
         fontMetrics = mBalloonTextPaint.getFontMetrics();
         float balloonBoundSize = fontMetrics.bottom - fontMetrics.top;
         float diameter = (float) Math.hypot(balloonBoundSize, balloonBoundSize);
 
-        // 根据直径计算气泡的rect区域
         mBalloonRect = new RectF(0, 0, diameter, diameter);
-        // 根据气泡的rect区域计算气泡的path
+
         mBalloonPath = new Path();
         mBalloonPath.addArc(mBalloonRect, 90, 270);
         mBalloonPath.rLineTo(0, mBalloonRect.height() / 2);
         mBalloonPath.rLineTo(-mBalloonRect.width() / 2, 0);
 
-        // 轮廓距离顶部的最小间距(为了满足气泡能在合理的位置绘制)
         mOutlineMinMarginTop = diameter - mCharHeight * 3.f / 2;
         if (mOutlineMinMarginTop < 0) {
             mOutlineMinMarginTop = 0;
         }
-        mTextBound = new Rect();
 
+
+        mTextBound = new Rect();
 
         mMaxTranslationX = mOutlineRect.width() + mHorizontalPadding;
 
@@ -254,18 +294,21 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
 
     /**
-     * 绑定RecyclerView，并为其添加索引条和回调
+     * Bind to RecyclerView and add scroll listener.
      *
-     * @param recyclerView 被绑定的RecyclerView对象
+     * @param recyclerView RecyclerView used to be bound.
+     * @param listener     scroll listener.
      */
-    public void attachToRecyclerView(RecyclerView recyclerView) {
+    public void attachToRecyclerView(RecyclerView recyclerView, onScrollListener listener) {
+        mListener = listener;
+
         if (mRecyclerView == recyclerView) {
             return;
         }
 
         if (mRecyclerView != null) {
             mRecyclerView.removeItemDecoration(this);
-            mRecyclerView.removeOnItemTouchListener(this);
+            mRecyclerView.removeOnItemTouchListener(mItemTouchListener);
             mRecyclerView.removeOnScrollListener(mOnScrollListener);
         }
 
@@ -273,7 +316,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
         if (mRecyclerView != null) {
             mRecyclerView.addItemDecoration(this);
-            mRecyclerView.addOnItemTouchListener(this);
+            mRecyclerView.addOnItemTouchListener(mItemTouchListener);
             mRecyclerView.addOnScrollListener(mOnScrollListener);
         }
     }
@@ -281,25 +324,18 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
     public static class Builder {
         private Context mContext;
-        private int mSectionSize; // sp
+        private int mIndexerTextSize; // sp
         private int mBalloonColor;
         private int mHorizontalPadding; //dp
         private String mIndexerString;
-        private onScrollListener mListener;
 
         public Builder(Context context, String indexerString) {
             mContext = context;
             mIndexerString = indexerString;
         }
 
-        public Builder onScrollListener(onScrollListener listener) {
-            mListener = listener;
-            return this;
-        }
-
-
-        public Builder sectionTextSize(int spSize) {
-            mSectionSize = spSize;
+        public Builder indexerTextSize(int spSize) {
+            mIndexerTextSize = spSize;
             return this;
         }
 
@@ -323,68 +359,71 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
 
-        // 如果果索引字符串为null或者处于动画结束状态就不绘制
-        if (mIndexerString == null || mAnimationState == ANIMATION_STATE_OUT) {
+        // Check indexer string and animation state.
+        if (TextUtils.isEmpty(mIndexerString) || mAnimationState == ANIMATION_STATE_OUT) {
             return;
         }
 
-        // if width or height changed , check whether RecyclerView has enough space to draw indexer
-        // 如果宽高改变了，检查RecyclerView是否有足够的空间来绘制索引条
+        // If width or height changed , check whether RecyclerView has enough space to draw indexer.
         if (mRecyclerViewWidth != parent.getWidth() || mRecyclerViewHeight != parent.getHeight()) {
             mRecyclerViewWidth = parent.getWidth();
             mRecyclerViewHeight = parent.getHeight();
 
-            // 如果没有足够的空间就不绘制索引
             if (mRecyclerViewHeight - mOutlineRect.height() <= mOutlineMinMarginTop) {
-                mHasEnoughSpace = false;
                 Log.w(TAG, "Couldn't show indexer. RecyclerView must have enough height!!!");
-                return;
+                mHasEnoughSpace = false;
             } else {
                 mHasEnoughSpace = true;
             }
         }
 
-        // 当RecyclerView的宽高没有改变的时候，如果还是没有足够的空间，就不绘制
-        if (!mHasEnoughSpace) {
+        if (!mHasEnoughSpace || mTranslationX == 0) {
             return;
-        } else {
-            // 如果有足够的空间就需要调整轮廓的位置
-            mOutlineRect.offsetTo(parent.getWidth() - mTranslationX,
-                    parent.getHeight() / 2.f - mOutlineRect.height() / 2.f);
         }
 
+        // Adjust outline's rect according to mTranslationX.
+        mOutlineRect.offsetTo(parent.getWidth() - mTranslationX,
+                parent.getHeight() / 2.f - mOutlineRect.height() / 2.f);
 
-        // 1. draw outline and alphabet
-        // 绘制轮廓和索引条
         drawOutlineAndAlphabet(c);
 
-        // 2. draw balloon and section
-        // 如果需要绘制气泡，并且所以字母不为null，就绘制气泡
         if (mShowBalloon && mSection != null) {
             drawBalloon(c);
         }
 
     }
 
+    /**
+     * Draw outline and indexer string.
+     *
+     * @param c canvas used to draw.
+     */
     private void drawOutlineAndAlphabet(Canvas c) {
         c.save();
-        // Draw outline
+        // 1. Draw outline.
         c.translate(mOutlineRect.left, mOutlineRect.top);
         c.drawPath(mOutlinePath, mOutlinePaint);
 
-        // Draw indexer
+        // 2. Draw indexer.
         for (int i = 0; i < mIndexerString.length(); i++) {
             String character = String.valueOf(mIndexerString.charAt(i));
-            mAlphabetTextPaint.getTextBounds(character, 0, character.length(), mTextBound);
+            mIndexerTextPaint.getTextBounds(character, 0, character.length(), mTextBound);
             float left = mCharWidth / 2.f - mTextBound.width() / 2.f;
-            float top = mCharHeight * (i + 1) + mTextBound.height() / 2;
-            c.drawText(character, left, top, mAlphabetTextPaint);
+            float top = mCharHeight * (i + 1) + mTextBound.height() / 2.f;
+            c.drawText(character, left, top, mIndexerTextPaint);
         }
+
         c.restore();
     }
 
+    /**
+     * Draw balloon.
+     *
+     * @param c canvas used to draw.
+     */
     private void drawBalloon(Canvas c) {
         c.save();
+
         float dy;
         if (mBalloonY == 0) {
             dy = mOutlineRect.top - mOutlineMinMarginTop;
@@ -395,45 +434,46 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
                 dy);
         c.drawPath(mBalloonPath, mBalloonPaint);
         mBalloonTextPaint.getTextBounds(mSection, 0, mSection.length(), mTextBound);
-        c.drawText(mSection, mBalloonRect.width() / 2 - mTextBound.width() / 2,
-                mBalloonRect.width() / 2 + mTextBound.height() / 2, mBalloonTextPaint);
+        c.drawText(mSection, mBalloonRect.width() / 2.f - mTextBound.width() / 2.f,
+                mBalloonRect.width() / 2.f + mTextBound.height() / 2.f, mBalloonTextPaint);
+
         c.restore();
     }
 
-    @Override
-    public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-        // 只要手指在轮廓的范围内，我都认为需要截断事件
-        return isPointInsideOutline(e.getX(), e.getY());
-    }
-
-    @Override
-    public void onTouchEvent(RecyclerView rv, MotionEvent e) {
-        Log.d(TAG, "onTouchEvent");
-        mRecyclerView.removeCallbacks(mHideRunnable);
-        switch (e.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                // 如果正在执行隐藏动画，那么就取消当前动画，并执行显示动画
-                if (mAnimationState == ANIMATION_STATE_TRANSLATING_OUT) {
-                    // TODO: show 完后会添加一个隐藏任务，如果手指不移动，还是会隐藏索引栏
-                    show();
+    private RecyclerView.SimpleOnItemTouchListener mItemTouchListener = new RecyclerView.SimpleOnItemTouchListener() {
+        @Override
+        public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+            boolean handled = false;
+            // Intercept it as long as pointer is in outline rect.
+            if (isPointInsideOutline(e.getX(), e.getY())) {
+                Log.i(TAG, "Pointer is in outline, so intercept it.");
+                mIsDragging = true;
+                if (mAnimationState == ANIMATION_STATE_IN) {
+                    cancelHideRunnable();
+                } else if (mAnimationState == ANIMATION_STATE_TRANSLATING_OUT) {
+                    translateIn();
                 }
-            case MotionEvent.ACTION_MOVE:
-                updateAndShowSection(rv, e.getY());
-                break;
-
-            case MotionEvent.ACTION_UP:
-                hideSection(rv);
-                // 如果手指离开索引条，就再次加入隐藏任务
-                mRecyclerView.postDelayed(mHideRunnable, HIDE_DELAY_AFTER_VISIBLE_MS);
-                break;
+                updateAndShowBalloon(e.getY());
+                handled = true;
+            }
+            return handled;
         }
-    }
 
+        @Override
+        public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_MOVE:
+                    updateAndShowBalloon(e.getY());
+                    break;
+                case MotionEvent.ACTION_UP:
+                    mIsDragging = false;
+                    hideBalloon();
+                    postHideRunnableDelayed(TRANSLATE_OUT_DELAY_AFTER_VISIBLE_MS);
+                    break;
+            }
+        }
+    };
 
-    @Override
-    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
-    }
 
     /**
      * check whether the point is inside outline.
@@ -452,40 +492,42 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
     }
 
     /**
-     * Get section indexer and show it .
+     * Get string of section within indexer string and show it .
      *
-     * @param rv RecyclerView used to show section indexer.
-     * @param y  axis of a motion event.
+     * @param y axis of a motion event.
      */
-    private void updateAndShowSection(RecyclerView rv, float y) {
-        // Get index of alphabet
+    private void updateAndShowBalloon(float y) {
+        // Get index of section within indexer string.
         int index = (int) ((y - mOutlineRect.top - mCharHeight / 2.f) / mCharHeight);
         index = Math.max(Math.min(index, mIndexerString.length() - 1), 0);
 
+        // Invoke callback.
         if (mListener != null) {
-            mListener.onSectionSelected(rv, index);
+            mListener.onScrolled(mRecyclerView, index);
         }
 
         mBalloonY = (index + 1) * mCharHeight + mCharHeight / 2.f + mOutlineRect.top;
 
-        // Show section indexer
         mSection = String.valueOf(mIndexerString.charAt(index));
         mShowBalloon = true;
-        rv.invalidate();
+        redraw();
     }
 
     /**
-     * Hide section indexer.
-     *
-     * @param rv RecyclerView used to hide section indexer.
+     * Hide balloon.
      */
-    private void hideSection(RecyclerView rv) {
+    private void hideBalloon() {
         mShowBalloon = false;
-        rv.invalidate();
+        redraw();
     }
 
     public interface onScrollListener {
-        void onSectionSelected(RecyclerView rv, int sectionIndex);
+        /**
+         * Callback method to be invoked when indexer is touched.
+         *
+         * @param sectionIndex index of section within indexer string.
+         */
+        void onScrolled(RecyclerView rv, int sectionIndex);
     }
 
 
@@ -497,40 +539,25 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             if (Math.abs(dy) > 0) {
-                // 只要有滚动就显示索引条
-                show();
+                translateIn();
             }
         }
     };
 
 
-    private void show() {
+
+    /**
+     * Translate indexer in from right to left.
+     */
+    private void translateIn() {
         switch (mAnimationState) {
             case ANIMATION_STATE_TRANSLATING_OUT:
-                // 如果正在向右位移出屏幕，就取消动画，然后执行下面的显示动画
-                Log.d(TAG, "cancel translation out animation, and execute show animation");
-                mTranslateAnimator.cancel();
+                // If animation is translating out, cancel it and execute translate in animation.
+                mTranslateAnimator.cancel(); // fall through
             case ANIMATION_STATE_OUT:
-                Log.d(TAG, "start show indexer animation");
                 mAnimationState = ANIMATION_STATE_TRANSLATING_IN;
                 mTranslateAnimator.setFloatValues((float) mTranslateAnimator.getAnimatedValue(), 1);
-                mTranslateAnimator.setInterpolator(mShowInterpolator);
-                mTranslateAnimator.start();
-                break;
-        }
-    }
-
-
-    private void hide() {
-        switch (mAnimationState) {
-            case ANIMATION_STATE_TRANSLATING_IN:
-                // 如果正在进行位移进入动画，就取消当前动画，执行下面的隐藏动画
-                // 防止 RecyclerView 大小改变而导致需要隐藏的情况
-                mTranslateAnimator.cancel();
-            case ANIMATION_STATE_IN:
-                mAnimationState = ANIMATION_STATE_TRANSLATING_OUT;
-                mTranslateAnimator.setFloatValues((float) mTranslateAnimator.getAnimatedValue(), 0);
-                mTranslateAnimator.setInterpolator(mHideInterpolator);
+                mTranslateAnimator.setInterpolator(mInInterpolator);
                 mTranslateAnimator.start();
                 break;
         }
@@ -538,8 +565,26 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
 
     /**
-     * 动画更监听器
-     * 执行动画的时候，计算需要位移的值，然后重绘
+     * Translate indexer out from left to right.
+     */
+    private void translateOut() {
+        switch (mAnimationState) {
+            case ANIMATION_STATE_TRANSLATING_IN:
+                // If animation is translating in, cancel it and execute translate out animation.
+                mTranslateAnimator.cancel();// fall through
+            case ANIMATION_STATE_IN:
+                mAnimationState = ANIMATION_STATE_TRANSLATING_OUT;
+                mTranslateAnimator.setFloatValues((float) mTranslateAnimator.getAnimatedValue(), 0);
+                mTranslateAnimator.setInterpolator(mOutInterpolator);
+                mTranslateAnimator.start();
+                break;
+        }
+    }
+
+
+    /**
+     * Animator update listener used to update variable mTranslationX and request RecyclerView
+     * to redraw.
      */
     private ValueAnimator.AnimatorUpdateListener mUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
         @Override
@@ -552,7 +597,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
 
     /**
-     * 用于监听动画的取消和完成。
+     * Animator listener used to listen for cancel event and end event.
      */
     private Animator.AnimatorListener mAnimatorListener = new AnimatorListenerAdapter() {
         private boolean mCanceled;
@@ -564,27 +609,49 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration implements Re
 
         @Override
         public void onAnimationEnd(Animator animation) {
-            // 如果取消了，就不需要执行后面的逻辑
+            // If canceled, do nothing.
             if (mCanceled) {
                 mCanceled = false;
                 return;
             }
 
             float animatedValue = (float) mTranslateAnimator.getAnimatedValue();
-            if (animatedValue == 0) { // 隐藏完毕
+            if (animatedValue == 0) { // translate out complete.
                 mAnimationState = ANIMATION_STATE_OUT;
-            } else { // 显示完毕
+            } else { // translate in complete.
                 mAnimationState = ANIMATION_STATE_IN;
-                mRecyclerView.postDelayed(mHideRunnable, HIDE_DELAY_AFTER_VISIBLE_MS);
+                // If is not dragging, post a hide runnable within RecyclerView.
+                if (!mIsDragging) {
+                    Log.d("david", "complete");
+                    postHideRunnableDelayed(TRANSLATE_OUT_DELAY_AFTER_VISIBLE_MS);
+                }
             }
         }
     };
 
 
     /**
-     * RecyclerView 进行重新绘制
+     * Request RecyclerView to redraw.
      */
     private void redraw() {
         mRecyclerView.invalidate();
+    }
+
+
+    /**
+     * post a delay hide runnable after indexer is visible.
+     *
+     * @param delay delay time.
+     */
+    private void postHideRunnableDelayed(int delay) {
+        mRecyclerView.postDelayed(mHideRunnable, delay);
+    }
+
+
+    /**
+     * Cancel hide runnable.
+     */
+    private void cancelHideRunnable() {
+        mRecyclerView.removeCallbacks(mHideRunnable);
     }
 }

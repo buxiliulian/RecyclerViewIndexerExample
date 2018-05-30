@@ -56,8 +56,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show());
+        fab.setOnClickListener(view -> {
+        });
 
         // init RecyclerView
         mContactsList = findViewById(R.id.contacts);
@@ -67,24 +67,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         });
         mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
         IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
-                .onScrollListener((rv, sectionIndex) -> {
-                    // Fast scroll to specified position
-                    RecyclerView.Adapter adapter = rv.getAdapter();
-                    if (adapter instanceof SectionIndexer) {
-                        SectionIndexer indexer = (SectionIndexer) adapter;
-                        int pos = indexer.getPositionForSection(sectionIndex);
-                        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
-                        if (layoutManager instanceof LinearLayoutManager) {
-                            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-                            linearLayoutManager.scrollToPositionWithOffset(pos, 0);
-                        }
-                    }
-                })
-                .sectionTextSize(12)
-                .horizontalPadding(IndexerDecoration.DEFAULT_HORIZONTAL_PADDING)
-                .balloonColor(IndexerDecoration.DEFAULT_BALLOON_COLOR)
+                .indexerTextSize(12)
+                .horizontalPadding(IndexerDecoration.DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP)
+                .balloonColor(IndexerDecoration.DEFAULT_BALLOON_BG_COLOR)
                 .build();
-        indexerDecoration.attachToRecyclerView(mContactsList);
+        indexerDecoration.attachToRecyclerView(mContactsList, (rv, sectionIndex) -> {
+            RecyclerView.Adapter adapter = rv.getAdapter();
+            if (adapter instanceof SectionIndexer) {
+                SectionIndexer indexer = (SectionIndexer) adapter;
+                int pos = indexer.getPositionForSection(sectionIndex);
+                RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                if (layoutManager instanceof LinearLayoutManager) {
+                    LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+                    linearLayoutManager.scrollToPositionWithOffset(pos, 0);
+                }
+            }
+        });
     }
 
     private void requestContactPermission() {
