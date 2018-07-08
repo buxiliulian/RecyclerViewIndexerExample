@@ -21,9 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SectionIndexer;
 
-import com.ckt.recyclerviewindexer.ContactsIndexer;
 import com.ckt.recyclerviewindexer.IndexerDecoration;
-import com.ckt.recyclerviewindexer.StickyHeaderDecoration;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private RecyclerView mContactsList;

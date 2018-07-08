@@ -14,13 +14,7 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.ckt.recyclerviewindexer.ContactsIndexer;
-
 import java.io.FileNotFoundException;
-
-/**
- * Created by D22255 on 2018/5/22.
- */
 
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> implements SectionIndexer {
     private Context mContext;

@@ -2,10 +2,6 @@ package com.ckt.recyclerviewindexerexample;
 
 import android.provider.ContactsContract;
 
-/**
- * Created by D22255 on 2018/5/22.
- */
-
 public interface ContactsQueryInterface {
     String[] PROJECTION = {
             ContactsContract.Contacts._ID,

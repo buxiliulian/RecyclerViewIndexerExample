@@ -1,4 +1,4 @@
-package com.ckt.recyclerviewindexer;
+package com.ckt.recyclerviewindexerexample;
 
 import android.database.Cursor;
 import android.widget.AlphabetIndexer;

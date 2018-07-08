@@ -1,4 +1,4 @@
-package com.ckt.recyclerviewindexer;
+package com.ckt.recyclerviewindexerexample;
 
 import android.content.Context;
 import android.content.res.TypedArray;
