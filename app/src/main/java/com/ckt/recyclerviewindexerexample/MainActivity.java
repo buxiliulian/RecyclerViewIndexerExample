@@ -21,7 +21,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SectionIndexer;
 
-import com.ckt.recyclerviewindexer.IndexerDecoration;
+import com.ckt.recyclerviewindexer.SimpleIndexer;
+import com.ckt.recyclerviewindexer.SquareIndexer;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private RecyclerView mContactsList;
@@ -64,12 +65,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.setOnContactClickListener(uri -> {
         });
         mContactsList.addItemDecoration(new StickyHeaderDecoration(this, StickyHeaderDecoration.VERTICAL));
-        IndexerDecoration indexerDecoration = new IndexerDecoration.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
+        SimpleIndexer.Builder builder = new SimpleIndexer.Builder(this, ContactsIndexer.DEFAULT_INDEXER_CHARACTERS)
                 .indexerTextSize(12)
-                .horizontalPadding(IndexerDecoration.DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP)
-                .balloonColor(IndexerDecoration.DEFAULT_BALLOON_BG_COLOR)
-                .build();
-        indexerDecoration.attachToRecyclerView(mContactsList, (rv, sectionIndex) -> {
+                .padding(SimpleIndexer.DEFAULT_PADDING_DP)
+                .indicatorColor(SimpleIndexer.DEFAULT_INDICATOR_BG_COLOR);
+        SimpleIndexer balloonIndexer = new SquareIndexer(builder);
+
+        balloonIndexer.attachToRecyclerView(mContactsList, (rv, sectionIndex) -> {
             RecyclerView.Adapter adapter = rv.getAdapter();
             if (adapter instanceof SectionIndexer) {
                 SectionIndexer indexer = (SectionIndexer) adapter;

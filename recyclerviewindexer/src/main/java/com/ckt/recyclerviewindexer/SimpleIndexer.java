@@ -20,6 +20,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
 import java.lang.annotation.Retention;
@@ -31,11 +32,12 @@ import java.lang.annotation.RetentionPolicy;
  *
  * @author wei.zhou
  */
-public class IndexerDecoration extends RecyclerView.ItemDecoration {
-    private static final String TAG = IndexerDecoration.class.getSimpleName();
+public abstract class SimpleIndexer extends RecyclerView.ItemDecoration {
+    private static final String TAG = SimpleIndexer.class.getSimpleName();
+    private int mScaledTouchSlop;
 
     private RecyclerView mRecyclerView;
-    private int mRecyclerViewWidth, mRecyclerViewHeight;
+    protected int mRecyclerViewWidth, mRecyclerViewHeight;
 
     /**
      * Indexer string, for example, alphabet.
@@ -55,7 +57,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
     /**
      * Height and width of character in indexer string.
      */
-    private int mCharHeight, mCharWidth;
+    protected int mCellHeight, mCellWidth;
 
 
     /**
@@ -79,51 +81,28 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
     /**
      * Outline's default horizontal padding.
      */
-    public static final int DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP = 5;
-    /**
-     * Outline's horizontal padding.
-     */
-    private int mHorizontalPadding;
+    public static final int DEFAULT_PADDING_DP = 5;
+
+    protected int mPadding;
 
     /**
-     * Outline's minimum margin top.
+     * Decide whether to show indicator.
      */
-    private float mOutlineMinMarginTop;
-
+    private boolean mShowIndicator;
     /**
-     * Paint used to draw balloon.
+     * Indicator's base y.
      */
-    private Paint mBalloonPaint;
-    /**
-     * Balloon's rect.
-     */
-    private RectF mBalloonRect;
-    /**
-     * Balloon's path.
-     */
-    private Path mBalloonPath;
-    /**
-     * Paint used to draw text in balloon.
-     */
-    private TextPaint mBalloonTextPaint;
-    /**
-     * Decide whether to show balloon.
-     */
-    private boolean mShowBalloon;
-    /**
-     * Balloon's coordinate of X axis.
-     */
-    private float mBalloonY;
+    private float mIndexerBaseY;
     /**
      * Balloon's default background color.
      */
-    public static final int DEFAULT_BALLOON_BG_COLOR = 0xee3F51B5;
+    public static final int DEFAULT_INDICATOR_BG_COLOR = 0xee3F51B5;
 
 
     /**
      * Rect used to measure text bound.
      */
-    private Rect mTextBound;
+    protected Rect mTmpTextBound;
 
 
     /**
@@ -140,6 +119,9 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
      * Indicate whether RecyclerView has enough space to draw indexer.
      */
     private boolean mHasEnoughSpace;
+    private RectF mOuter;
+    protected int mIndexerTextSize;
+    protected int mIndicatorBgColor;
 
 
     /**
@@ -211,7 +193,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
     private boolean mIsDragging;
 
 
-    public IndexerDecoration(Builder builder) {
+    public SimpleIndexer(Builder builder) {
         mIndexerString = builder.mIndexerString;
         if (TextUtils.isEmpty(mIndexerString)) {
             Log.w(TAG, "You have not set indexer string.");
@@ -219,35 +201,37 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
         }
 
         DisplayMetrics displayMetrics = builder.mContext.getResources().getDisplayMetrics();
+        ViewConfiguration viewConfiguration = ViewConfiguration.get(builder.mContext);
+        mScaledTouchSlop = viewConfiguration.getScaledTouchSlop();
 
-        int indexerTextSize = builder.mIndexerTextSize <= DEFAULT_INDEXER_TEXT_SIZE_SP ?
+        mIndexerTextSize = builder.mIndexerTextSize <= DEFAULT_INDEXER_TEXT_SIZE_SP ?
                 DEFAULT_INDEXER_TEXT_SIZE_SP : builder.mIndexerTextSize;
-        indexerTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, indexerTextSize,
+        mIndexerTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mIndexerTextSize,
                 displayMetrics);
 
-        int horizontalPadding = builder.mHorizontalPadding <= 0 ?
-                DEFAULT_OUTLINE_HORIZONTAL_PADDING_DP : builder.mHorizontalPadding;
-        mHorizontalPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, horizontalPadding,
+        int padding = builder.mPadding <= 0 ?
+                DEFAULT_PADDING_DP : builder.mPadding;
+        mPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, padding,
                 displayMetrics);
 
         mIndexerTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mIndexerTextPaint.setTextSize(indexerTextSize);
+        mIndexerTextPaint.setTextSize(mIndexerTextSize);
 
         Paint.FontMetrics fontMetrics = mIndexerTextPaint.getFontMetrics();
         float fontMetricsHeight = fontMetrics.bottom - fontMetrics.top;
-        mCharWidth = mCharHeight = (int) Math.ceil(fontMetricsHeight);
+        mCellWidth = mCellHeight = (int) Math.ceil(fontMetricsHeight);
 
         mOutlineRect = new RectF();
-        mOutlineRect.right = mCharWidth;
-        mOutlineRect.bottom = mCharHeight * mIndexerString.length() + mCharHeight;
+        mOutlineRect.right = mCellWidth;
+        mOutlineRect.bottom = mCellHeight / 2.f + mCellHeight * mIndexerString.length() + mCellHeight / 2.f;
 
         mOutlinePath = new Path();
-        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.top, mOutlineRect.width(), mCharHeight,
+        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.top, mOutlineRect.width(), mCellHeight,
                 180, 180);
-        mOutlinePath.rLineTo(0, mOutlineRect.height() - mCharHeight);
-        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.height() - mCharHeight,
+        mOutlinePath.rLineTo(0, mOutlineRect.height() - mCellHeight);
+        mOutlinePath.addArc(mOutlineRect.left, mOutlineRect.height() - mCellHeight,
                 mOutlineRect.width(), mOutlineRect.height(), 0, 180);
-        mOutlinePath.lineTo(0, mCharHeight / 2.f);
+        mOutlinePath.lineTo(0, mCellHeight / 2.f);
 
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setStyle(Paint.Style.STROKE);
@@ -255,41 +239,27 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
         int outlineStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_OUTLINE_STROKE_WIDTH_DP, displayMetrics);
         mOutlinePaint.setStrokeWidth(outlineStrokeWidth);
 
-        mBalloonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBalloonPaint.setStyle(Paint.Style.FILL);
-        int balloonColor = builder.mBalloonColor <= 0 ?
-                DEFAULT_BALLOON_BG_COLOR : builder.mBalloonColor;
-        mBalloonPaint.setColor(balloonColor);
+        mOuter = new RectF();
+        offsetOuter();
 
-        mBalloonTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mBalloonTextPaint.setColor(Color.WHITE);
-        mBalloonTextPaint.setTextSize(indexerTextSize * 2);
+        mIndicatorBgColor = builder.mIndicatorColor <= 0 ?
+                DEFAULT_INDICATOR_BG_COLOR : builder.mIndicatorColor;
 
-        fontMetrics = mBalloonTextPaint.getFontMetrics();
-        float balloonBoundSize = fontMetrics.bottom - fontMetrics.top;
-        float diameter = (float) Math.hypot(balloonBoundSize, balloonBoundSize);
+        mTmpTextBound = new Rect();
 
-        mBalloonRect = new RectF(0, 0, diameter, diameter);
-
-        mBalloonPath = new Path();
-        mBalloonPath.addArc(mBalloonRect, 90, 270);
-        mBalloonPath.rLineTo(0, mBalloonRect.height() / 2);
-        mBalloonPath.rLineTo(-mBalloonRect.width() / 2, 0);
-
-        mOutlineMinMarginTop = diameter - mCharHeight * 3.f / 2;
-        if (mOutlineMinMarginTop < 0) {
-            mOutlineMinMarginTop = 0;
-        }
-
-
-        mTextBound = new Rect();
-
-        mMaxTranslationX = mOutlineRect.width() + mHorizontalPadding;
+        mMaxTranslationX = mOutlineRect.width() + mPadding;
 
         mTranslateAnimator = ValueAnimator.ofFloat(0, 1);
         mTranslateAnimator.setDuration(ANIMATION_DURATION_MS);
         mTranslateAnimator.addUpdateListener(mUpdateListener);
         mTranslateAnimator.addListener(mAnimatorListener);
+    }
+
+    private void offsetOuter() {
+        mOuter.left = mOutlineRect.left - mPadding;
+        mOuter.top = mOutlineRect.top - mPadding;
+        mOuter.right = mOutlineRect.right + mPadding;
+        mOuter.bottom = mOutlineRect.bottom + mPadding;
     }
 
 
@@ -323,11 +293,11 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
 
 
     public static class Builder {
-        private Context mContext;
-        private int mIndexerTextSize; // sp
-        private int mBalloonColor;
-        private int mHorizontalPadding; //dp
-        private String mIndexerString;
+        Context mContext;
+        int mIndexerTextSize; // sp
+        int mIndicatorColor;
+        int mPadding; //dp
+        String mIndexerString;
 
         public Builder(Context context, String indexerString) {
             mContext = context;
@@ -339,20 +309,15 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
             return this;
         }
 
-        public Builder balloonColor(int color) {
-            mBalloonColor = color;
+        public Builder indicatorColor(int color) {
+            mIndicatorColor = color;
             return this;
         }
 
-        public Builder horizontalPadding(int dpPadding) {
-            mHorizontalPadding = dpPadding;
+        public Builder padding(int dpPadding) {
+            mPadding = dpPadding;
             return this;
         }
-
-        public IndexerDecoration build() {
-            return new IndexerDecoration(this);
-        }
-
     }
 
 
@@ -369,7 +334,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
             mRecyclerViewWidth = parent.getWidth();
             mRecyclerViewHeight = parent.getHeight();
 
-            if (mRecyclerViewHeight - mOutlineRect.height() <= mOutlineMinMarginTop) {
+            if ((mRecyclerViewHeight - mOutlineRect.height()) / 2.f < mPadding) {
                 Log.w(TAG, "Couldn't show indexer. RecyclerView must have enough height!!!");
                 mHasEnoughSpace = false;
             } else {
@@ -381,16 +346,16 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
             return;
         }
 
-        // Adjust outline's rect according to mTranslationX.
+        // If translate, adjust outline and outer's rect.
         mOutlineRect.offsetTo(parent.getWidth() - mTranslationX,
                 parent.getHeight() / 2.f - mOutlineRect.height() / 2.f);
+        offsetOuter();
 
-        drawOutlineAndAlphabet(c);
+        drawOutlineAndIndexer(c);
 
-        if (mShowBalloon && mSection != null) {
-            drawBalloon(c);
+        if (mShowIndicator && mSection != null) {
+            drawIndicator(c, mOuter, mIndexerBaseY, mSection);
         }
-
     }
 
     /**
@@ -398,7 +363,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
      *
      * @param c canvas used to draw.
      */
-    private void drawOutlineAndAlphabet(Canvas c) {
+    private void drawOutlineAndIndexer(Canvas c) {
         c.save();
         // 1. Draw outline.
         c.translate(mOutlineRect.left, mOutlineRect.top);
@@ -407,38 +372,17 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
         // 2. Draw indexer.
         for (int i = 0; i < mIndexerString.length(); i++) {
             String character = String.valueOf(mIndexerString.charAt(i));
-            mIndexerTextPaint.getTextBounds(character, 0, character.length(), mTextBound);
-            float left = mCharWidth / 2.f - mTextBound.width() / 2.f;
-            float top = mCharHeight * (i + 1) + mTextBound.height() / 2.f;
+            mIndexerTextPaint.getTextBounds(character, 0, character.length(), mTmpTextBound);
+            float left = mCellWidth / 2.f - mTmpTextBound.width() / 2.f;
+            float top = mCellHeight * (i + 1) + mTmpTextBound.height() / 2.f;
             c.drawText(character, left, top, mIndexerTextPaint);
         }
 
         c.restore();
     }
 
-    /**
-     * Draw balloon.
-     *
-     * @param c canvas used to draw.
-     */
-    private void drawBalloon(Canvas c) {
-        c.save();
 
-        float dy;
-        if (mBalloonY == 0) {
-            dy = mOutlineRect.top - mOutlineMinMarginTop;
-        } else {
-            dy = mBalloonY - mBalloonRect.height();
-        }
-        c.translate(mOutlineRect.left - mHorizontalPadding - mBalloonRect.width(),
-                dy);
-        c.drawPath(mBalloonPath, mBalloonPaint);
-        mBalloonTextPaint.getTextBounds(mSection, 0, mSection.length(), mTextBound);
-        c.drawText(mSection, mBalloonRect.width() / 2.f - mTextBound.width() / 2.f,
-                mBalloonRect.width() / 2.f + mTextBound.height() / 2.f, mBalloonTextPaint);
-
-        c.restore();
-    }
+    public abstract void drawIndicator(Canvas c, RectF outer, float indicatorBaseY, String indicatorChar);
 
     private RecyclerView.SimpleOnItemTouchListener mItemTouchListener = new RecyclerView.SimpleOnItemTouchListener() {
         @Override
@@ -453,7 +397,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
                 } else if (mAnimationState == ANIMATION_STATE_TRANSLATING_OUT) {
                     translateIn();
                 }
-                updateAndShowBalloon(e.getY());
+                updateIndicatorState(e.getY());
                 handled = true;
             }
             return handled;
@@ -463,11 +407,11 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
         public void onTouchEvent(RecyclerView rv, MotionEvent e) {
             switch (e.getAction()) {
                 case MotionEvent.ACTION_MOVE:
-                    updateAndShowBalloon(e.getY());
+                    updateIndicatorState(e.getY());
                     break;
                 case MotionEvent.ACTION_UP:
                     mIsDragging = false;
-                    hideBalloon();
+                    setIndicatorState(false);
                     postHideRunnableDelayed(TRANSLATE_OUT_DELAY_AFTER_VISIBLE_MS);
                     break;
             }
@@ -482,6 +426,7 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
      * @param y Y axis of a motion event.
      * @return true, if inside, or in verse.
      */
+
     private boolean isPointInsideOutline(float x, float y) {
         boolean inside = false;
         if (x >= mOutlineRect.left && x <= mOutlineRect.right
@@ -491,33 +436,24 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
         return inside;
     }
 
-    /**
-     * Get string of section within indexer string and show it .
-     *
-     * @param y axis of a motion event.
-     */
-    private void updateAndShowBalloon(float y) {
-        // Get index of section within indexer string.
-        int index = (int) ((y - mOutlineRect.top - mCharHeight / 2.f) / mCharHeight);
+    private void updateIndicatorState(float y) {
+        int index = (int) ((y - mOutlineRect.top - mCellHeight / 2.f) / mCellHeight);
         index = Math.max(Math.min(index, mIndexerString.length() - 1), 0);
 
-        // Invoke callback.
+        // Callback.
         if (mListener != null) {
             mListener.onScrolled(mRecyclerView, index);
         }
 
-        mBalloonY = (index + 1) * mCharHeight + mCharHeight / 2.f + mOutlineRect.top;
+        mIndexerBaseY = (index + 1) * mCellHeight + mCellHeight / 2.f + mOutlineRect.top;
 
         mSection = String.valueOf(mIndexerString.charAt(index));
-        mShowBalloon = true;
-        redraw();
+
+        setIndicatorState(true);
     }
 
-    /**
-     * Hide balloon.
-     */
-    private void hideBalloon() {
-        mShowBalloon = false;
+    private void setIndicatorState(boolean show) {
+        mShowIndicator = show;
         redraw();
     }
 
@@ -538,12 +474,11 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
 
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            if (Math.abs(dy) > 0) {
+            if (Math.abs(dy) >= mScaledTouchSlop) {
                 translateIn();
             }
         }
     };
-
 
 
     /**
@@ -622,7 +557,6 @@ public class IndexerDecoration extends RecyclerView.ItemDecoration {
                 mAnimationState = ANIMATION_STATE_IN;
                 // If is not dragging, post a hide runnable within RecyclerView.
                 if (!mIsDragging) {
-                    Log.d("david", "complete");
                     postHideRunnableDelayed(TRANSLATE_OUT_DELAY_AFTER_VISIBLE_MS);
                 }
             }
