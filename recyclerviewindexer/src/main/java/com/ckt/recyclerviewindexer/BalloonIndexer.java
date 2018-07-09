@@ -6,7 +6,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.text.TextPaint;
-import android.util.Log;
 
 /**
  * This class is used to draw balloon style indicator of SimpleIndexer.

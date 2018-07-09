@@ -41,11 +41,11 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 //你的library版本号
-version = "0.1.4"
+version = "0.1.7"
 
-def siteUrl = 'https://github.com/buxiliulian/MDContacts'
-def gitUrl = 'https://github.com/buxiliulian/MDContacts.git'
-def issueUrl = 'https://github.com/buxiliulian/MDContacts/issues'
+def siteUrl = 'https://github.com/buxiliulian/RecyclerViewIndexerExample'
+def gitUrl = 'https://github.com/buxiliulian/RecyclerViewIndexerExample.git'
+def issueUrl = 'https://github.com/buxiliulian/RecyclerViewIndexerExample/issues'
 
 group = "com.buxiliulian.rv"
 install {
