@@ -49,7 +49,6 @@ public class BalloonIndexer extends SimpleIndexer {
 
     @Override
     public void drawIndicator(Canvas c, RectF outer, float indicatorBaseY, String indicatorChar) {
-        Log.d("david", "drawIndicator");
         if ((mRecyclerViewHeight - outer.height()) / 2.f <= mOutlineMinMarginTop) {
             return;
         }
