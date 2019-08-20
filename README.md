@@ -49,5 +49,5 @@ If you want to know more, please refer to https://blog.csdn.net/zwlove5280/artic
 Please feel free to contact me if you have any question when using this library.
 1. blog: https://my.csdn.net/zwlove5280
 2. QQ Email: 509643792@qq.com
-3. Gmail: zwlove5250@gmail.com
+3. Gmail: zwlove5280@gmail.com
 
